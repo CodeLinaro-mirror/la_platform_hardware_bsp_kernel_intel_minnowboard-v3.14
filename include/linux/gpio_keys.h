@@ -2,6 +2,7 @@
 #define _GPIO_KEYS_H
 
 struct device;
+struct gpio_desc;
 
 struct gpio_keys_button {
 	/* Configuration parameters */
@@ -15,6 +16,7 @@ struct gpio_keys_button {
 	bool can_disable;
 	int value;		/* axis value for EV_ABS */
 	unsigned int irq;	/* Irq number in case of interrupt keys */
+	struct gpio_desc *gpiod;/* GPIO descriptor */
 };
 
 struct gpio_keys_platform_data {
