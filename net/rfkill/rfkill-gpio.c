@@ -90,6 +90,15 @@ static const struct rfkill_ops rfkill_gpio_ops = {
 	.set_block = rfkill_gpio_set_power,
 };
 
+static const struct acpi_gpio_params reset_gpios = { 0, 0, false };
+static const struct acpi_gpio_params shutdown_gpios = { 1, 0, false };
+
+static const struct acpi_gpio_mapping acpi_rfkill_default_gpios[] = {
+	{ "reset-gpios", &reset_gpios, 1 },
+	{ "shutdown-gpios", &shutdown_gpios, 1 },
+	{ },
+};
+
 static irqreturn_t rfkill_gpio_host_wake(int irq, void *dev)
 {
 	struct rfkill_gpio_data *rfkill = dev;
@@ -210,7 +219,8 @@ static int rfkill_gpio_acpi_probe(struct device *dev,
 	rfkill->name = dev_name(dev);
 	rfkill->type = desc->type;
 
-	return rfkill_gpio_init(dev, desc);
+	return acpi_dev_add_driver_gpios(ACPI_COMPANION(dev),
+					 acpi_rfkill_default_gpios);
 }
 
 static int rfkill_gpio_probe(struct platform_device *pdev)
@@ -232,12 +242,13 @@ static int rfkill_gpio_probe(struct platform_device *pdev)
 	} else if (pdata) {
 		rfkill->name = pdata->name;
 		rfkill->type = pdata->type;
-		ret = rfkill_gpio_init(&pdev->dev, NULL);
-		if (ret)
-			return ret;
 	} else {
 		return -ENODEV;
 	}
+
+	ret = rfkill_gpio_init(&pdev->dev, NULL);
+	if (ret)
+		return ret;
 
 	rfkill->rfkill_dev = rfkill_alloc(rfkill->name, &pdev->dev,
 					  rfkill->type, &rfkill_gpio_ops,
@@ -298,6 +309,8 @@ static int rfkill_gpio_remove(struct platform_device *pdev)
 
 	rfkill_unregister(rfkill->rfkill_dev);
 	rfkill_destroy(rfkill->rfkill_dev);
+
+	acpi_dev_remove_driver_gpios(ACPI_COMPANION(&pdev->dev));
 
 	return 0;
 }
