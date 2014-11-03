@@ -320,6 +320,8 @@ struct acpi_device_data {
 	const union acpi_object *of_compatible;
 };
 
+struct acpi_gpio_mapping;
+
 /* Device */
 struct acpi_device {
 	int device_type;
@@ -340,6 +342,7 @@ struct acpi_device {
 	struct acpi_device_data data;
 	struct acpi_scan_handler *handler;
 	struct acpi_driver *driver;
+	const struct acpi_gpio_mapping *driver_gpios;
 	struct acpi_pld_info *pld;
 	void *driver_data;
 	struct device dev;
