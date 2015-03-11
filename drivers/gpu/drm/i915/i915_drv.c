@@ -558,6 +558,7 @@ static int i915_drm_freeze(struct drm_device *dev)
 	struct drm_crtc *crtc;
 	int ret;
 	u32 i;
+	char *envp[] = { "GSTATE=3", NULL };
 
 	/* ignore lid events during suspend */
 	mutex_lock(&dev_priv->modeset_restore_lock);
@@ -640,6 +641,8 @@ static int i915_drm_freeze(struct drm_device *dev)
 
 	if (!IS_VALLEYVIEW(dev))
 		intel_display_set_init_power(dev_priv, false);
+
+	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
 	return 0;
 }
@@ -730,6 +733,7 @@ static int __i915_drm_thaw(struct drm_device *dev, bool restore_gtt_mappings)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
+	char *envp[] = { "GSTATE=0", NULL };
 
 	if (IS_VALLEYVIEW(dev) && !IS_CHERRYVIEW(dev)) {
 		intel_uncore_early_sanitize(dev);
@@ -814,6 +818,7 @@ static int __i915_drm_thaw(struct drm_device *dev, bool restore_gtt_mappings)
 	mutex_unlock(&dev_priv->modeset_restore_lock);
 
 	sysfs_notify(&dev->primary->kdev->kobj, NULL, "thaw");
+	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
 	return 0;
 }
@@ -1919,6 +1924,7 @@ static int intel_runtime_suspend(struct device *device)
 	struct drm_device *dev = pci_get_drvdata(pdev);
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret, i;
+	char *envp[] = { "GSTATE=3", NULL };
 
 	if (WARN_ON_ONCE(!(dev_priv->rps.enabled && intel_enable_rc6(dev))))
 		return -ENODEV;
@@ -1989,6 +1995,8 @@ static int intel_runtime_suspend(struct device *device)
 	 */
 	intel_opregion_notify_adapter(dev, PCI_D1);
 
+	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
+
 	DRM_DEBUG_KMS("Device suspended\n");
 	return 0;
 }
@@ -2005,6 +2013,7 @@ static int intel_runtime_resume(struct device *device)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
 	u32 gtfifodbg;
+	char *envp[] = { "GSTATE=0", NULL };
 
 	/*
 	 * FIXME: GTFIFODBG registers gets set to 0x10 post resume from S0iX.
@@ -2040,6 +2049,8 @@ static int intel_runtime_resume(struct device *device)
 		DRM_ERROR("Runtime resume failed, disabling it (%d)\n", ret);
 	else
 		DRM_DEBUG_KMS("Device resumed\n");
+
+	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
 	return ret;
 }
