@@ -1145,7 +1145,7 @@ static int acpi_i2c_add_resource(struct acpi_resource *ares, void *data)
 								I2C_CLIENT_TEN;
 			rcs_info->count++;
 		}
-	} else if (rcs_info->common_irq < 0) {
+	} else if (!rcs_info->common_irq) {
 		struct resource r;
 
 		if (acpi_dev_resource_interrupt(ares, 0, &r)) {
@@ -1179,7 +1179,7 @@ static acpi_status acpi_i2c_add_device(acpi_handle handle, u32 level,
 	info.acpi_node.companion = adev;
 
 	memset(&rcs_info, 0, sizeof(rcs_info));
-	rcs_info.common_irq = -1;
+	rcs_info.common_irq = 0;
 
 	INIT_LIST_HEAD(&resource_list);
 	ret = acpi_dev_get_resources(adev, &resource_list,
