@@ -159,6 +159,9 @@ err_i1:
 const struct drm_ioctl_desc i915_ext_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I915_EXT_USERDATA, i915_gem_userdata_ioctl,
 			  DRM_UNLOCKED|DRM_CONTROL_ALLOW|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_EXT_REG_SAVE_RESTORE_TABLE,
+			  i915_gem_reg_save_restore_ioctl,
+			  DRM_ROOT_ONLY|DRM_UNLOCKED|DRM_RENDER_ALLOW),
 };
 
 int i915_max_ext_ioctl = ARRAY_SIZE(i915_ext_ioctls);

@@ -5869,3 +5869,68 @@ i915_gem_access_userdata(struct drm_device *dev, void *data,
 
 	return 0;
 }
+
+int i915_gem_reg_save_restore_ioctl(struct drm_device *dev, void *data,
+				 struct drm_file *file_priv)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_reg_save_restore_table *args = data;
+	u32 *reg_offsets;
+	int ret = 0;
+
+	/* This ioctl has DRM_ROOT_ONLY set. To be full sure, check for
+	 * the appropriate permission here, in case the upper layer has
+	 * not enforced the check for the ROOT flag.
+	 */
+	if (!capable(CAP_SYS_ADMIN)) {
+		DRM_DEBUG_DRIVER("reg list provided by a non-root user\n");
+		return -EACCES;
+	}
+
+	if (!I915_HAS_REG_SAVE_RESTORE(dev)) {
+		DRM_DEBUG_DRIVER("not supported\n");
+		return -ENODEV;
+	}
+
+	/* check the validity of the parameters that have been passed in */
+	if ((args->reg_count < 1) || (args->reg_count > 64) ||
+	    (!args->offsets_ptr)) {
+		DRM_DEBUG_DRIVER("invalid reg offset list=(0x%llx, %d)\n",
+			args->offsets_ptr, args->reg_count);
+		return -EINVAL;
+	}
+
+	if (dev_priv->reg_save_restore_list.reg_offsets) {
+		DRM_DEBUG_DRIVER("reg list already provided\n");
+		return -EEXIST;
+	}
+
+	/*
+	 * User provides a list of the register offsets, but driver needs to
+	 * store the corresponding values also, apart from offsets.
+	 * Allocating the memory for offset/value pairs in one call, in the
+	 * memory first all the register offsets will be stored followed by
+	 * the corresponding values.
+	 */
+	reg_offsets = kmalloc(sizeof(u32)*args->reg_count*2, GFP_KERNEL);
+	if (!reg_offsets)
+		return -ENOMEM;
+
+	ret = copy_from_user(reg_offsets, to_user_ptr(args->offsets_ptr),
+				sizeof(u32) * args->reg_count);
+	if (ret) {
+		kfree(reg_offsets);
+		return -EFAULT;
+	}
+
+	/* Make sure the device is resumed, before the table is updated */
+	intel_runtime_pm_get(dev_priv);
+
+	dev_priv->reg_save_restore_list.count = args->reg_count;
+	dev_priv->reg_save_restore_list.reg_offsets = reg_offsets;
+	dev_priv->reg_save_restore_list.saved_values =
+					reg_offsets + args->reg_count;
+
+	intel_runtime_pm_put(dev_priv);
+	return 0;
+}

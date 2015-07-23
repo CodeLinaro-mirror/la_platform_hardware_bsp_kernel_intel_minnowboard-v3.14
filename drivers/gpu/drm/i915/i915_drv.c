@@ -1699,6 +1699,30 @@ static void vlv_restore_gunit_s0ix_state(struct drm_i915_private *dev_priv)
 	I915_WRITE(VLV_GUNIT_CLOCK_GATE2,	s->clock_gate_dis2);
 }
 
+/*
+ * Save all GT(Render/Media well) registers that may be lost after a D3
+ * and a subsequent S0i[R123] transition.
+ */
+static void vlv_save_gt_registers(struct drm_i915_private *dev_priv)
+{
+	int i;
+	u32 *reg_offsets = dev_priv->reg_save_restore_list.reg_offsets;
+	u32 *saved_values = dev_priv->reg_save_restore_list.saved_values;
+
+	for (i = 0; i < dev_priv->reg_save_restore_list.count; i++)
+		saved_values[i] = I915_READ(reg_offsets[i]);
+}
+
+static void vlv_restore_gt_registers(struct drm_i915_private *dev_priv)
+{
+	int i;
+	u32 *reg_offsets = dev_priv->reg_save_restore_list.reg_offsets;
+	u32 *saved_values = dev_priv->reg_save_restore_list.saved_values;
+
+	for (i = 0; i < dev_priv->reg_save_restore_list.count; i++)
+		I915_WRITE(reg_offsets[i], saved_values[i]);
+}
+
 int vlv_force_gfx_clock(struct drm_i915_private *dev_priv, bool force_on)
 {
 	u32 val;
@@ -1804,6 +1828,7 @@ static int vlv_suspend_complete(struct drm_i915_private *dev_priv)
 	int err;
 
 	WARN_ON(!dev_priv->power_domains.init_power_on);
+	vlv_save_gt_registers(dev_priv);
 
 	/*
 	 * Bspec defines the following GT well on flags as debug only, so
@@ -1882,6 +1907,7 @@ static int vlv_resume_prepare(struct drm_i915_private *dev_priv,
 		i915_gem_restore_fences(dev);
 	}
 
+	vlv_restore_gt_registers(dev_priv);
 	intel_display_set_init_power(dev_priv, true);
 
 	return ret;

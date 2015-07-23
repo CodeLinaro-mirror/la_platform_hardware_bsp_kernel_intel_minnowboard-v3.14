@@ -1932,6 +1932,12 @@ struct drm_i915_private {
 	bool video_disabled;
 	uint32_t request_uniq;
 
+	struct {
+		u32 count;
+		u32 *reg_offsets;
+		u32 *saved_values;
+	} reg_save_restore_list;
+
 	/*
 	 * NOTE: This is the dri1/ums dungeon, don't add stuff here. Your patch
 	 * will be rejected. Instead look for a better place.
@@ -2422,6 +2428,8 @@ enum context_submission_status {
 #define I915_HAS_DPST(dev) (INTEL_INFO(dev)->has_dpst && \
 			    !(i915.enable_intel_adf))
 #define I915_HAS_RS(dev) (INTEL_INFO(dev)->has_rs)
+#define I915_HAS_REG_SAVE_RESTORE(dev) (IS_VALLEYVIEW(dev) && \
+					!IS_CHERRYVIEW(dev))
 
 #define HAS_IPS(dev)		(IS_ULT(dev) || IS_BROADWELL(dev))
 
@@ -2634,6 +2642,8 @@ int i915_gem_get_aperture_ioctl(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 int i915_gem_wait_ioctl(struct drm_device *dev, void *data,
 			struct drm_file *file_priv);
+int i915_gem_reg_save_restore_ioctl(struct drm_device *dev, void *data,
+				 struct drm_file *file_priv);
 void i915_gem_load(struct drm_device *dev);
 unsigned long i915_gem_shrink(struct drm_i915_private *dev_priv,
 			      long target,

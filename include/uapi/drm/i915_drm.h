@@ -313,9 +313,13 @@ struct i915_ext_ioctl_data {
 
 /* Extended ioctl definitions */
 #define DRM_I915_EXT_USERDATA		0x0
+#define DRM_I915_EXT_REG_SAVE_RESTORE_TABLE	0x3
 
 #define DRM_IOCTL_I915_EXT_USERDATA \
 	DRM_IOWR(DRM_I915_EXT_USERDATA, struct drm_i915_gem_userdata_blk)
+#define DRM_IOCTL_I915_EXT_REG_SAVE_RESTORE_TABLE \
+	DRM_IOWR(DRM_I915_EXT_REG_SAVE_RESTORE_TABLE, \
+		struct drm_i915_reg_save_restore_table)
 
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
@@ -1103,6 +1107,17 @@ struct drm_i915_gem_userdata_blk {
 	 * ioctl for this interface
 	*/
 	__u64 data_ptr;
+};
+
+/*
+ * Interface to provide the list of registers for save/restore
+ */
+struct drm_i915_reg_save_restore_table {
+	/* List of offsets for registers, need to be saved/restored across D3 */
+	__u64 offsets_ptr;
+
+	/* Number of registers to be save/restored */
+	__u32 reg_count;
 };
 
 struct drm_i915_gem_get_aperture {
