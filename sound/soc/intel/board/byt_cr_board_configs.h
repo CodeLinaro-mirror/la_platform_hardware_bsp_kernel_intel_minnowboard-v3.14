@@ -63,6 +63,7 @@ enum board_id_rt5640 {
 	RT5640_MALATA_A105i,
 	RT5640_CHIPHD,
 	RT5640_IP3_T15,
+	RT5640_EMDOOR_I8170,
 };
 
 static const char codec_hid0[] = "10EC5640";
@@ -123,6 +124,15 @@ static const struct board_config board_configs0[] = {
 	[RT5640_IP3_T15] = {
 		.name = "bytcr-rt5640",
 		.idx = RT5640_IP3_T15,
+		.i2s_port = 0,
+		.mic_input = 3,
+		.jack_active_low = 1,
+		.jack_int_sel = JACK_INT2,
+		.jack_bp_sel = JACK_BP_CODEC,
+	},
+	[RT5640_EMDOOR_I8170] = {
+		.name = "bytcr-rt5640",
+		.idx = RT5640_EMDOOR_I8170,
 		.i2s_port = 0,
 		.mic_input = 3,
 		.jack_active_low = 1,
@@ -205,6 +215,14 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
 		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
+	},
+	[RT5640_EMDOOR_I8170] = {
+		.ident = "Emdoor-i8170",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_NAME, "I8170"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
+		},
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
 	},
 	{}
 };
