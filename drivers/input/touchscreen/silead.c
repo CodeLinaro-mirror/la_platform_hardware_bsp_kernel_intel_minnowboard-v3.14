@@ -559,6 +559,7 @@ static const struct i2c_device_id silead_ts_id[] = {
 	{ "GSL1688", 0 },
 	{ "GSL3670", 0 },
 	{ "GSL3680", 0 },
+	{ "GSL3692", 0 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, silead_ts_id);
@@ -568,6 +569,7 @@ static const struct acpi_device_id silead_ts_acpi_match[] = {
 	{ "GSL1688", 0 },
 	{ "GSL3670", 0 },
 	{ "GSL3680", 0 },
+	{ "GSL3692", 0 },
 	{ }
 };
 MODULE_DEVICE_TABLE(acpi, silead_ts_acpi_match);
