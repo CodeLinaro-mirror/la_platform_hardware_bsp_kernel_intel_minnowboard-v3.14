@@ -352,11 +352,11 @@ static void intel_dsi_pre_enable(struct intel_encoder *encoder)
 	tmp |= DPOUNIT_CLOCK_GATE_DISABLE;
 	I915_WRITE(DSPCLK_GATE_D, tmp);
 
-	/* put device in ready state */
-	intel_dsi_device_ready(encoder);
-
 	if (intel_dsi->dev.dev_ops->panel_reset)
 		intel_dsi->dev.dev_ops->panel_reset(&intel_dsi->dev);
+
+	/* put device in ready state */
+	intel_dsi_device_ready(encoder);
 
 	if (intel_dsi->dev.dev_ops->send_otp_cmds)
 		intel_dsi->dev.dev_ops->send_otp_cmds(&intel_dsi->dev);
