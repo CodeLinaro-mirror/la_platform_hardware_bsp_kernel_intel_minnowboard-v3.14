@@ -312,6 +312,8 @@ static void intel_dsi_pre_enable(struct intel_encoder *encoder)
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->base.crtc);
 	enum pipe pipe = intel_crtc->pipe;
 	u32 tmp;
+	u32 val;
+	u32 count = 1;
 
 	DRM_DEBUG_KMS("\n");
 
@@ -354,6 +356,22 @@ static void intel_dsi_pre_enable(struct intel_encoder *encoder)
 
 	if (intel_dsi->dev.dev_ops->panel_reset)
 		intel_dsi->dev.dev_ops->panel_reset(&intel_dsi->dev);
+	if (intel_dsi->dual_link) {
+		count = 2;
+		pipe = PIPE_A;
+	}
+
+	do {
+		I915_WRITE(MIPI_DEVICE_READY(pipe), 0x0);
+		I915_WRITE(MIPI_EOT_DISABLE(pipe), CLOCKSTOP);
+		tmp = I915_READ(MIPI_DSI_FUNC_PRG(pipe));
+		tmp &= ~VID_MODE_FORMAT_MASK;
+		I915_WRITE(MIPI_DSI_FUNC_PRG(pipe), tmp);
+		I915_WRITE(MIPI_DEVICE_READY(pipe), 0x1);
+
+		if (intel_dsi->dual_link)
+			pipe = PIPE_B;
+	} while (--count > 0);
 
 	/* put device in ready state */
 	intel_dsi_device_ready(encoder);
@@ -365,6 +383,30 @@ static void intel_dsi_pre_enable(struct intel_encoder *encoder)
 		intel_dsi->dev.dev_ops->tear_on(&intel_dsi->dev);
 
 	wait_for_dsi_fifo_empty(intel_dsi);
+
+	if (intel_dsi->dual_link) {
+		pipe = PIPE_A;
+		count = 2;
+	} else
+		count = 1;
+
+	do {
+		I915_WRITE(MIPI_DEVICE_READY(pipe), 0x0);
+		val = intel_dsi->lane_count << DATA_LANES_PRG_REG_SHIFT;
+		val |= intel_dsi->channel << VID_MODE_CHANNEL_NUMBER_SHIFT;
+		val |= intel_dsi->pixel_format;
+		I915_WRITE(MIPI_DSI_FUNC_PRG(pipe), val);
+		val = 0;
+		if (intel_dsi->eotp_pkt == 0)
+			val |= EOT_DISABLE;
+		if (intel_dsi->clock_stop)
+			val |= CLOCKSTOP;
+		I915_WRITE(MIPI_EOT_DISABLE(pipe), val);
+		I915_WRITE(MIPI_DEVICE_READY(pipe), 0x1);
+
+		if (intel_dsi->dual_link)
+			pipe = PIPE_B;
+	} while (--count > 0);
 
 	/* Enable port in pre-enable phase itself because as per hw team
 	 * recommendation, port should be enabled befor plane & pipe */
@@ -860,24 +902,6 @@ static void intel_dsi_mode_set(struct intel_encoder *intel_encoder)
 		count = 1;
 
 	do {
-		val = intel_dsi->lane_count << DATA_LANES_PRG_REG_SHIFT;
-		if (is_cmd_mode(intel_dsi)) {
-			val |= intel_dsi->channel <<
-					CMD_MODE_CHANNEL_NUMBER_SHIFT;
-			val |= CMD_MODE_DATA_WIDTH_OPTION2;
-
-			I915_WRITE(MIPI_DBI_FIFO_THROTTLE(pipe),
-					DBI_FIFO_EMPTY_QUARTER);
-			I915_WRITE(MIPI_HS_LP_DBI_ENABLE(pipe), 0);
-		} else {
-			val |= intel_dsi->channel <<
-					VID_MODE_CHANNEL_NUMBER_SHIFT;
-
-			/* XXX: cross-check bpp vs. pixel format? */
-			val |= intel_dsi->pixel_format;
-		}
-		I915_WRITE(MIPI_DSI_FUNC_PRG(pipe), val);
-
 		/*
 		 * timeouts for recovery. one frame IIUC. if counter expires,
 		 * EOT and stop state.
