@@ -5427,15 +5427,22 @@ static void valleyview_crtc_enable(struct drm_crtc *crtc)
 
 	intel_enable_pipe(intel_crtc);
 
-	/* For DSI, enable encoder after planes */
+	/*
+	 * For DSI, enable encoder after planes
+	 * For EDP on IP3T15, also delays the encoder enable
+	 */
 	for_each_encoder_on_crtc(dev, crtc, encoder)
-		if (encoder->type != INTEL_OUTPUT_DSI)
+		if (encoder->type != INTEL_OUTPUT_DSI &&
+		    !(encoder->type == INTEL_OUTPUT_EDP &&
+		      dmi_match(DMI_BOARD_NAME, "T15")))
 			encoder->enable(encoder);
 
 	intel_crtc_enable_planes(crtc);
 
 	for_each_encoder_on_crtc(dev, crtc, encoder)
-		if (encoder->type == INTEL_OUTPUT_DSI)
+		if (encoder->type == INTEL_OUTPUT_DSI ||
+		    (encoder->type == INTEL_OUTPUT_EDP &&
+		     dmi_match(DMI_BOARD_NAME, "T15")))
 			encoder->enable(encoder);
 
 	intel_update_drrs(dev);
