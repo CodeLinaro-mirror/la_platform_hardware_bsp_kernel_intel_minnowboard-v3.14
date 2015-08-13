@@ -65,6 +65,7 @@ enum board_id_rt5640 {
 	RT5640_IP3_T15,
 	RT5640_IP3_T85,
 	RT5640_EMDOOR_I8170,
+	RT5640_EMDOOR_I8811,
 	RT5640_EMDOOR_I8889,
 };
 
@@ -229,6 +230,14 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 		.ident = "Emdoor-i8170",
 		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "I8170"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
+		},
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
+	},
+	[RT5640_EMDOOR_I8811] = {
+		.ident = "Emdoor-i8811",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_NAME, "I8811"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
 		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
