@@ -32,6 +32,8 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+#include <linux/dmi.h>
+#include <linux/mfd/intel_soc_pmic.h>
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -2449,6 +2451,39 @@ static void intel_vlv_edp_psr_init(struct intel_dp *intel_dp)
 	DRM_DEBUG_KMS("PSR setup done\n");
 }
 
+static int
+intel_dp_ctrl_lvds_panel(struct drm_device *dev, struct intel_dp *intel_dp,
+			 bool is_pmic_on, bool is_bridge_reset)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	int val, ret;
+
+	DRM_DEBUG_KMS("pmic_on:%d, reset:%d\n", is_pmic_on, is_bridge_reset);
+
+	/* DLDO3 */
+	val = intel_soc_pmic_readb(0x12);
+	if (is_pmic_on) {
+		val |= 1 << 5;
+	} else {
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x4100, 0x2000CC00);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x4108, 0x00000004);
+		val &= ~(1 << 5);
+	}
+	ret = intel_soc_pmic_writeb(0x12, val);
+
+	if (is_bridge_reset) {
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x4100, 0x2000CC00);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x4108, 0x00000005);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x40c0, 0x2000cc00);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x40c8, 0x00000005);
+		usleep_range(2000, 5000);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x40c8, 0x00000004);
+		usleep_range(2000, 5000);
+		vlv_gpio_write(dev_priv, IOSF_PORT_GPIO_NC, 0x40c8, 0x00000005);
+	}
+	return ret;
+}
+
 static void intel_disable_dp(struct intel_encoder *encoder)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
@@ -2485,8 +2520,13 @@ static void g4x_post_disable_dp(struct intel_encoder *encoder)
 static void vlv_post_disable_dp(struct intel_encoder *encoder)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
+	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
+	struct drm_device *dev = intel_dig_port->base.base.dev;
 
 	intel_dp_link_down(intel_dp);
+
+	if (dmi_match(DMI_BOARD_NAME, "T15"))
+		intel_dp_ctrl_lvds_panel(dev, intel_dp, false, false);
 }
 
 static void chv_post_disable_dp(struct intel_encoder *encoder)
@@ -2732,6 +2772,9 @@ static void intel_enable_dp(struct intel_encoder *encoder)
 
 	if (WARN_ON(dp_reg & DP_PORT_EN))
 		return;
+
+	if (dmi_match(DMI_BOARD_NAME, "T15"))
+		intel_dp_ctrl_lvds_panel(dev, intel_dp, true, true);
 
 	intel_edp_panel_vdd_on(intel_dp);
 	intel_edp_init_train(intel_dp);
@@ -4592,6 +4635,9 @@ intel_dp_detect(struct drm_connector *connector, bool force)
 	if (status != connector_status_connected)
 		goto out;
 
+	if (dmi_match(DMI_BOARD_NAME, "T15"))
+		intel_dp_ctrl_lvds_panel(dev, intel_dp, true, false);
+
 	intel_dp_probe_oui(intel_dp);
 
 	if (intel_dp->force_audio != HDMI_AUDIO_AUTO) {
@@ -5392,8 +5438,12 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	 * for DP the encoder type can be set by the caller to
 	 * INTEL_OUTPUT_UNKNOWN for DDI, so don't rewrite it.
 	 */
-	if (type == DRM_MODE_CONNECTOR_eDP)
+	if (type == DRM_MODE_CONNECTOR_eDP) {
 		intel_encoder->type = INTEL_OUTPUT_EDP;
+
+		if (dmi_match(DMI_BOARD_NAME, "T15"))
+			intel_dp_ctrl_lvds_panel(dev, intel_dp, true, false);
+	}
 
 	DRM_DEBUG_KMS("Adding %s connector on port %c\n",
 			type == DRM_MODE_CONNECTOR_eDP ? "eDP" : "DP",
