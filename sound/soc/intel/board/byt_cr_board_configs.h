@@ -214,7 +214,7 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 		.ident = "IP3-T15",
 		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "T15"),
-			DMI_MATCH(DMI_BOARD_VERSION, "1"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
 		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
 	},
