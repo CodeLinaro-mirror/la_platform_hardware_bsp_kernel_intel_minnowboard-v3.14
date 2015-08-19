@@ -16,6 +16,7 @@
 #include <linux/gpio/consumer.h>
 #include <linux/lnw_gpio.h>
 #include <linux/delay.h>
+#include <linux/dmi.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
 #include <linux/regulator/driver.h>
@@ -234,15 +235,25 @@ static void intel_setup_dollar_cove_sd_regulators(void)
 
 	/* set enable time for vqmmc regulator, stabilize power rail */
 	dcovex_vqmmc_data.constraints.enable_time = 10000;
+	if (dmi_match(DMI_BOARD_NAME, "I8880")) {
+		dcovex_vmmc_data.constraints.name = "LDO_1";
+		dcovex_vqmmc_data.constraints.name = "LDO_2";
 
-	dcovex_vmmc_data.constraints.name = "LDO_2";
-	dcovex_vqmmc_data.constraints.name = "LDO_3";
+		/* I8880 register SD card regulator for dollar cove PMIC */
+		intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vmmc_info,
+			sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO1 + 1);
+		intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vqmmc_info,
+			sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO2 + 1);
+	}else{
+		dcovex_vmmc_data.constraints.name = "LDO_2";
+		dcovex_vqmmc_data.constraints.name = "LDO_3";
 
-	/* register SD card regulator for dollar cove PMIC */
-	intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vmmc_info,
-		sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO2 + 1);
-	intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vqmmc_info,
-		sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO3 + 1);
+		/* register SD card regulator for dollar cove PMIC */
+		intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vmmc_info,
+			sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO2 + 1);
+		intel_soc_pmic_set_pdata("dcovex_regulator", &dcove_vqmmc_info,
+			sizeof(struct dcovex_regulator_info), DCOVEX_ID_LDO3 + 1);
+	}
 }
 
 /*************************************************************
