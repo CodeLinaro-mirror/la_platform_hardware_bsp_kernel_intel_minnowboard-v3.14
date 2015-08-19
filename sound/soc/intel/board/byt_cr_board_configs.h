@@ -133,6 +133,15 @@ static const struct board_config board_configs0[] = {
 		.jack_int_sel = JACK_INT1,
 		.jack_bp_sel = JACK_BP_MICBIAS,
 	},
+	[RT5640_IP3_T85] = {
+		.name = "bytcr-rt5640",
+		.idx = RT5640_IP3_T85,
+		.i2s_port = 0,
+		.mic_input = 3,
+		.jack_active_low = 1,
+		.jack_int_sel = JACK_INT2,
+		.jack_bp_sel = JACK_BP_CODEC,
+	},
 	[RT5640_EMDOOR_I8170] = {
 		.name = "bytcr-rt5640",
 		.idx = RT5640_EMDOOR_I8170,
@@ -224,7 +233,7 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 			DMI_MATCH(DMI_BOARD_NAME, "T85"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
-		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
+		.driver_data = (void *)&board_configs0[RT5640_IP3_T85],
 	},
 	[RT5640_EMDOOR_I8170] = {
 		.ident = "Emdoor-i8170",
