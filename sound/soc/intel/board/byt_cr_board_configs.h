@@ -68,6 +68,7 @@ enum board_id_rt5640 {
 	RT5640_EMDOOR_I8811,
 	RT5640_EMDOOR_I8880,
 	RT5640_EMDOOR_I8889,
+	RT5640_TONGFANG_TF16,
 };
 
 static const char codec_hid0[] = "10EC5640";
@@ -151,6 +152,15 @@ static const struct board_config board_configs0[] = {
 		.jack_active_low = 1,
 		.jack_int_sel = JACK_INT2,
 		.jack_bp_sel = JACK_BP_CODEC,
+	},
+	[RT5640_TONGFANG_TF16] = {
+		.name = "bytcr-rt5640",
+		.idx = RT5640_TONGFANG_TF16,
+		.i2s_port = 0,
+		.mic_input = 3,
+		.jack_active_low = 1,
+		.jack_int_sel = JACK_INT1,
+		.jack_bp_sel = JACK_BP_MICBIAS,
 	},
 	{}
 };
@@ -267,6 +277,14 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
 		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
+	},
+	[RT5640_TONGFANG_TF16] = {
+		.ident = "TongFang-TF16",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_NAME, "TF16"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
+		},
+		.driver_data = (void *)&board_configs0[RT5640_TONGFANG_TF16],
 	},
 	{}
 };
