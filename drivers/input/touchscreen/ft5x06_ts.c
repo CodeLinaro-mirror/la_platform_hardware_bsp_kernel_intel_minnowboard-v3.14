@@ -63,6 +63,8 @@ struct ft5x0x_ts_data {
 	u16 touch_points;
 	u8 addr;
 	u8 reg;
+	u16 x_max;
+	u16 y_max;
 	bool x_flip;
 	bool y_flip;
 	bool swap_axis;
@@ -304,11 +306,31 @@ static int ft5x0x_report_touch(struct ft5x0x_ts_data *ft)
 			input_report_abs(ft->input_dev, ABS_MT_TOUCH_MAJOR,
 					event->pressure);
 
-			input_report_abs(ft->input_dev, ABS_MT_POSITION_X,
-					event->au16_x[i]);
-
-			input_report_abs(ft->input_dev, ABS_MT_POSITION_Y,
+			dev_dbg(&ft->client->dev, "x=%d y=%d\n",
+					event->au16_x[i], event->au16_y[i]);
+			if (ft->swap_axis) {
+				input_report_abs(ft->input_dev,
+					ABS_MT_POSITION_X,
+					ft->y_flip ?
+					ft->y_max - event->au16_y[i] :
 					event->au16_y[i]);
+				input_report_abs(ft->input_dev,
+					ABS_MT_POSITION_Y,
+					ft->x_flip ?
+					ft->x_max - event->au16_x[i] :
+					event->au16_x[i]);
+			} else {
+				input_report_abs(ft->input_dev,
+					ABS_MT_POSITION_X,
+					ft->x_flip ?
+					ft->x_max - event->au16_x[i] :
+					event->au16_x[i]);
+				input_report_abs(ft->input_dev,
+					ABS_MT_POSITION_Y,
+					ft->y_flip ?
+					ft->y_max - event->au16_y[i] :
+					event->au16_y[i]);
+			}
 		} else {
 			uppoint++;
 			input_mt_report_slot_state(ft->input_dev,
@@ -338,6 +360,84 @@ static irqreturn_t ft5x0x_irq_handler(int irq, void *dev_id)
 
 	return IRQ_HANDLED;
 }
+
+static int ft5x0x_get_acpi_propdata(struct i2c_client *client)
+{
+	struct ft5x0x_ts_data *data = i2c_get_clientdata(client);
+	struct acpi_device *adev = ACPI_COMPANION(&client->dev);
+	struct acpi_buffer buffer = {ACPI_ALLOCATE_BUFFER, NULL};
+	acpi_status status;
+	union acpi_object *obj, *elem;
+
+	if (!data)
+		return -ENODEV;
+
+	if (!adev)
+		return -ENODEV;
+
+	status = acpi_evaluate_object(adev->handle, "PRP0", NULL, &buffer);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
+
+	obj = buffer.pointer;
+
+	if (!obj || obj->type != ACPI_TYPE_PACKAGE || !obj->package.count)
+		goto prop_err;
+
+	/* first element is reserved for firmware name */
+
+	/* second element is x max */
+	elem = &obj->package.elements[1];
+	if (elem->type != ACPI_TYPE_INTEGER)
+		goto prop_err;
+
+	data->x_max = elem->integer.value;
+
+	/* third element is y max */
+	elem = &obj->package.elements[2];
+	if (elem->type != ACPI_TYPE_INTEGER)
+		goto prop_err;
+
+	data->y_max = elem->integer.value;
+
+	/* fourth element is swap axis */
+	if (obj->package.count > 3) {
+		elem = &obj->package.elements[3];
+		if (elem->type != ACPI_TYPE_INTEGER)
+			goto prop_err;
+		data->swap_axis = elem->integer.value;
+	}
+
+	/* fifth element is invert x */
+	if (obj->package.count > 4) {
+		elem = &obj->package.elements[4];
+		if (elem->type != ACPI_TYPE_INTEGER)
+			goto prop_err;
+		data->x_flip = elem->integer.value;
+	}
+
+	/* sixith element is invert y */
+	if (obj->package.count > 5) {
+		elem = &obj->package.elements[5];
+		if (elem->type != ACPI_TYPE_INTEGER)
+			goto prop_err;
+		data->y_flip = elem->integer.value;
+	}
+
+	dev_dbg(&client->dev,
+		"acpi x_max:%d y_max:%d swap:%d xflip:%d yflip:%d\n",
+		data->x_max, data->y_max,
+		data->swap_axis, data->x_flip,
+		data->y_flip);
+
+	kfree(buffer.pointer);
+	return 0;
+
+prop_err:
+	kfree(buffer.pointer);
+	return -EINVAL;
+}
+
 
 static int ft5x0x_gpio_init(struct ft5x0x_ts_data *ts_data)
 {
@@ -494,6 +594,10 @@ static int ft5x0x_acpi_probe(struct ft5x0x_ts_data *ts_data)
 	if (!id)
 		return -ENODEV;
 
+	ret = ft5x0x_get_acpi_propdata(client);
+	if (ret < 0)
+		dev_warn(dev, "acpi getting properties failed\n");
+
 	/* touch gpio interrupt pin */
 	gpio = devm_gpiod_get_index(dev, FT5X0X_IRQ_NAME, index);
 
@@ -639,6 +743,7 @@ static int ft5x0x_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "failed to allocate driver data.\n");
 		return -ENOMEM;
 	}
+	i2c_set_clientdata(client, ts_data);
 
 	input_dev = devm_input_allocate_device(&client->dev);
 	if (!input_dev) {
@@ -654,6 +759,13 @@ static int ft5x0x_ts_probe(struct i2c_client *client,
 
 	ts_data->client = client;
 	ts_data->input_dev = input_dev;
+
+	/* Set default configuration parameters */
+	ts_data->x_max = SCREEN_MAX_X;
+	ts_data->y_max = SCREEN_MAX_Y;
+	ts_data->swap_axis = false;
+	ts_data->x_flip = false;
+	ts_data->y_flip = false;
 
 	if (client->dev.platform_data)
 		err = ft5x0x_platform_probe(ts_data);
@@ -672,16 +784,17 @@ static int ft5x0x_ts_probe(struct i2c_client *client,
 	input_set_abs_params(ts_data->input_dev, ABS_MT_TOUCH_MAJOR,
 				0, PRESS_MAX, 0, 0);
 	input_set_abs_params(ts_data->input_dev, ABS_MT_POSITION_X,
-				0, SCREEN_MAX_X, 0, 0);
+				0, ts_data->swap_axis ?
+				ts_data->y_max : ts_data->x_max, 0, 0);
 	input_set_abs_params(ts_data->input_dev, ABS_MT_POSITION_Y,
-				0, SCREEN_MAX_Y, 0, 0);
+				0, ts_data->swap_axis ?
+				ts_data->x_max : ts_data->y_max, 0, 0);
 
 	__set_bit(EV_ABS, ts_data->input_dev->evbit);
 	__set_bit(EV_KEY, ts_data->input_dev->evbit);
 	__set_bit(BTN_TOUCH, ts_data->input_dev->keybit);
 
 	input_set_drvdata(input_dev, ts_data);
-	i2c_set_clientdata(client, ts_data);
 
 	if (client->irq < 0)
 		return -ENODEV;
@@ -893,6 +1006,8 @@ static SIMPLE_DEV_PM_OPS(ft5x0x_ts_pm_ops,
 static const struct acpi_device_id ft5x0x_acpi_match[] = {
 	{"FT05506", 0},
 	{"FTTH5506", 0},
+	{"FT05826", 0},
+	{"FTTH5826", 0},
 	{ },
 };
 MODULE_DEVICE_TABLE(acpi, ft5x0x_acpi_match);
