@@ -783,7 +783,7 @@ static void cpufreq_interactive_touchboost(void)
 		if (pcpu->target_freq < tunables->touchboost_freq) {
 			pcpu->target_freq = tunables->touchboost_freq;
 			cpumask_set_cpu(i, &speedchange_cpumask);
-			pcpu->hispeed_validate_time =
+			pcpu->pol_hispeed_val_time =
 				ktime_to_us(ktime_get());
 			anyboost = 1;
 		}
