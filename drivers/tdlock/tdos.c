@@ -77,10 +77,12 @@ bool td_is_tdos(void)
 	}
 
 	utf8s_to_utf16s(TARGET_VARNAME_LAST,
-			sizeof(TARGET_VARNAME_LAST) - 1,
+			sizeof(TARGET_VARNAME_LAST),
 			UTF16_LITTLE_ENDIAN,
 			varname,
-			sizeof(*varname));
+			sizeof(TARGET_VARNAME_LAST)
+			* sizeof(wchar_t));
+	varname[sizeof(TARGET_VARNAME_LAST) - 1] = 0;
 
 	name_size = sizeof(wchar_t) * (REBOOT_REASON_LENGTH + 1);
 
@@ -111,10 +113,11 @@ bool td_is_tdos(void)
 	}
 
 	utf16s_to_utf8s(name,
-			name_size / sizeof(wchar_t) - 1,
+			name_size,
 			UTF16_LITTLE_ENDIAN,
 			reason,
-			REBOOT_REASON_LENGTH);
+			name_size);
+	name[name_size - 1] = 0;
 
 	k_debug("TD_OS: reboot reason = %s\n", reason);
 	is_tdos = (strcmp(reason, TDOS_REBOOT_REASON) == 0);

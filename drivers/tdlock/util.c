@@ -23,6 +23,9 @@
 #include "tpmcmd.h"
 #include "util.h"
 
+#define TPM_SEND_OK 1
+#define TPM_SEND_ERROR -1
+
 static int td_tpm_chip_num;
 
 void td_tpm_select_chip_num(int chip_num)
@@ -57,8 +60,10 @@ ssize_t td_tpm_transmit(u8 *buf, size_t size)
 		be32_to_cpu(header_ptr->in.length));
 	k_print_hexbuf("", buf, be32_to_cpu(header_ptr->in.length));
 
-	rc = tpm_send(td_tpm_chip_num, buf, size);
-	if (rc < 0) {
+	if (tpm_send(td_tpm_chip_num, buf, size) == 0) {
+		rc = TPM_SEND_OK;
+	} else {
+		rc = TPM_SEND_ERROR;
 		k_err("Fail to execute command! rc=%d\n", rc);
 		goto out;
 	}

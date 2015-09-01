@@ -36,16 +36,18 @@ static ssize_t td_sclock_procfile_read(struct file *filp,
 {
 	u32 sclock;
 	unsigned long size;
-
 	size = sizeof(u32);
 	if (count < size) {
 		k_err("Invalid count of secure clock!\n");
 		return 0;
 	}
 
-	if (td_mei_get_sc(&sclock))
-		return copy_to_user(buf, &sclock, size);
-
+	if (td_mei_get_sc(&sclock)) {
+		if (copy_to_user((u32 *)buf, &sclock, size))
+			return 0;
+		else
+			return size;
+	}
 	return 0;
 }
 static long td_reboot_procfile_ioctl(struct file *filp,
