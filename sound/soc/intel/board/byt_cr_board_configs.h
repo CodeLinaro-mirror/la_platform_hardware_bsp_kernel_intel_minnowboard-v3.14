@@ -150,8 +150,8 @@ static const struct board_config board_configs0[] = {
 		.i2s_port = 0,
 		.mic_input = 3,
 		.jack_active_low = 1,
-		.jack_int_sel = JACK_INT2,
-		.jack_bp_sel = JACK_BP_CODEC,
+		.jack_int_sel = JACK_INT1,
+		.jack_bp_sel = JACK_BP_MICBIAS,
 	},
 	[RT5640_TONGFANG_TF16] = {
 		.name = "bytcr-rt5640",
