@@ -10,7 +10,7 @@
 
 #define CFG_MAX_TOUCH_POINTS	10
 #define FT_PRESS		8
-#define FT_TOUCH_STEP		6
+#define FT_TOUCH_STEP		4
 #define FT_TOUCH_X_H_POS	3
 #define FT_TOUCH_X_L_POS	4
 #define FT_TOUCH_Y_H_POS	5
