@@ -63,6 +63,7 @@ enum board_id_rt5640 {
 	RT5640_MALATA_A105i,
 	RT5640_CHIPHD,
 	RT5640_IP3_T15,
+	RT5640_IP3_IRA101,
 	RT5640_IP3_T85,
 	RT5640_EMDOOR_I8170,
 	RT5640_EMDOOR_I8811,
@@ -234,6 +235,14 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 		.ident = "IP3-T15",
 		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "T15"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
+		},
+		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
+	},
+	[RT5640_IP3_IRA101] = {
+		.ident = "IRA101",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_NAME, "IRA101"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
 		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
