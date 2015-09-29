@@ -914,6 +914,18 @@ static struct snd_soc_dai_link byt_dailink[] = {
 		.dynamic = 1,
 		.ops = &byt_aif1_ops,
 	},
+	[BYT_DPCM_DB] = {
+		.name = "Baytrail DB Audio Port",
+		.stream_name = "Deep Buffer Audio",
+		.cpu_dai_name = "Deepbuffer-cpu-dai",
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.platform_name = "sst-platform",
+		.ignore_suspend = 1,
+		.dynamic = 1,
+		.ops = &byt_aif1_ops,
+		.dpcm_playback = 1,
+	},
 	[BYT_DPCM_VOIP] = {
 		.name = "Baytrail VOIP Port",
 		.stream_name = "Baytrail Voip",

@@ -14,6 +14,7 @@
 
 enum {
 	BYT_DPCM_AUDIO = 0,
+	BYT_DPCM_DB,
 	BYT_DPCM_VOIP,
 };
 
