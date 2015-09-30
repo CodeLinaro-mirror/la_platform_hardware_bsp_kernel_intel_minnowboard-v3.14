@@ -58,7 +58,6 @@ struct ts_event {
 struct ft5x0x_ts_data {
 	struct i2c_client *client;
 	struct input_dev *input_dev;
-	int irq;
 	struct mutex lock;
 	u16 touch_points;
 	u8 addr;
@@ -889,7 +888,7 @@ static int ft5x0x_ts_suspend(struct device *dev)
 
 	dev_dbg(&tsdata->client->dev, "suspend");
 
-	disable_irq(tsdata->irq);
+	disable_irq(tsdata->client->irq);
 
 	ret = ft5x0x_set_pmode(tsdata, PMODE_HIBERNATE);
 
@@ -933,7 +932,7 @@ static int ft5x0x_ts_resume(struct device *dev)
 	if (ret < 0)
 		goto out;
 
-	enable_irq(tsdata->irq);
+	enable_irq(tsdata->client->irq);
 
 	tsdata->suspended = false;
 
