@@ -62,13 +62,12 @@ enum board_id_rt5640 {
 	RT5640_MALATA_A10,
 	RT5640_MALATA_A105i,
 	RT5640_CHIPHD,
-	RT5640_IP3_T15,
 	RT5640_IP3_IRA101,
 	RT5640_IP3_T85,
-	RT5640_EMDOOR_I8170,
 	RT5640_EMDOOR_I8811,
-	RT5640_EMDOOR_I8880,
 	RT5640_EMDOOR_I8889,
+	RT5640_EMDOOR_VTA0705,
+	RT5640_EMDOOR_VTA0803,
 	RT5640_TONGFANG_TF16,
 };
 
@@ -127,9 +126,9 @@ static const struct board_config board_configs0[] = {
 		.jack_int_sel = JACK_INT2,
 		.jack_bp_sel = JACK_BP_CODEC,
 	},
-	[RT5640_IP3_T15] = {
+	[RT5640_IP3_IRA101] = {
 		.name = "bytcr-rt5640",
-		.idx = RT5640_IP3_T15,
+		.idx = RT5640_IP3_IRA101,
 		.i2s_port = 0,
 		.mic_input = 3,
 		.jack_active_low = 1,
@@ -145,9 +144,9 @@ static const struct board_config board_configs0[] = {
 		.jack_int_sel = JACK_INT2,
 		.jack_bp_sel = JACK_BP_CODEC,
 	},
-	[RT5640_EMDOOR_I8170] = {
+	[RT5640_EMDOOR_VTA0705] = {
 		.name = "bytcr-rt5640",
-		.idx = RT5640_EMDOOR_I8170,
+		.idx = RT5640_EMDOOR_VTA0705,
 		.i2s_port = 0,
 		.mic_input = 3,
 		.jack_active_low = 1,
@@ -231,21 +230,13 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 		},
 		.driver_data = (void *)&board_configs0[RT5640_CHIPHD],
 	},
-	[RT5640_IP3_T15] = {
-		.ident = "IP3-T15",
-		.matches = {
-			DMI_MATCH(DMI_BOARD_NAME, "T15"),
-			DMI_MATCH(DMI_BOARD_VERSION, "0"),
-		},
-		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
-	},
 	[RT5640_IP3_IRA101] = {
 		.ident = "IRA101",
 		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "IRA101"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
-		.driver_data = (void *)&board_configs0[RT5640_IP3_T15],
+		.driver_data = (void *)&board_configs0[RT5640_IP3_IRA101],
 	},
 	[RT5640_IP3_T85] = {
 		.ident = "IP3-T85",
@@ -255,13 +246,21 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 		},
 		.driver_data = (void *)&board_configs0[RT5640_IP3_T85],
 	},
-	[RT5640_EMDOOR_I8170] = {
-		.ident = "Emdoor-i8170",
+	[RT5640_EMDOOR_VTA0705] = {
+		.ident = "VTA0705",
 		.matches = {
-			DMI_MATCH(DMI_BOARD_NAME, "I8170"),
+			DMI_MATCH(DMI_BOARD_NAME, "VTA0705"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
-		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_VTA0705],
+	},
+	[RT5640_EMDOOR_VTA0803] = {
+		.ident = "VTA0803",
+		.matches = {
+			DMI_MATCH(DMI_BOARD_NAME, "VTA0803"),
+			DMI_MATCH(DMI_BOARD_VERSION, "0"),
+		},
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_VTA0705],
 	},
 	[RT5640_EMDOOR_I8811] = {
 		.ident = "Emdoor-i8811",
@@ -269,15 +268,7 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 			DMI_MATCH(DMI_BOARD_NAME, "I8811"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
-		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
-	},
-	[RT5640_EMDOOR_I8880] = {
-		.ident = "Emdoor-i8880",
-		.matches = {
-			DMI_MATCH(DMI_BOARD_NAME, "I8880"),
-			DMI_MATCH(DMI_BOARD_VERSION, "0"),
-		},
-		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_VTA0705],
 	},
 	[RT5640_EMDOOR_I8889] = {
 		.ident = "Emdoor-i8889",
@@ -285,7 +276,7 @@ static const struct dmi_system_id dmi_system_ids0[] = {
 			DMI_MATCH(DMI_BOARD_NAME, "I8889"),
 			DMI_MATCH(DMI_BOARD_VERSION, "0"),
 		},
-		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_I8170],
+		.driver_data = (void *)&board_configs0[RT5640_EMDOOR_VTA0705],
 	},
 	[RT5640_TONGFANG_TF16] = {
 		.ident = "TongFang-TF16",
