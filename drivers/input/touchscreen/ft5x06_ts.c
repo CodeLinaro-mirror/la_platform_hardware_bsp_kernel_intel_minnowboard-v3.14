@@ -44,6 +44,7 @@
 #define FT5X0X_WAKE_NAME "ft5x0x_gpio_wake"
 #define BYTES_PER_LINE 16
 #define MAX_REG_LEN 256
+#define FT5506_CHIP_NAME "FTTH5506"
 
 struct ts_event {
 	u16 au16_x[CFG_MAX_TOUCH_POINTS];	/*x coordinate */
@@ -248,6 +249,11 @@ static int ft5x0x_report_touch(struct ft5x0x_ts_data *ft)
 	u8 buf[62] = {0};
 	u8 num_touch, pointid, i = 0;
 	int ret, uppoint = 0;
+	int touch_step = FT_TOUCH_STEP;
+
+	/* Add padding of 2 bytes between touch points for FT5506 */
+	if (!strncmp((const char *) &ft->client->name, FT5506_CHIP_NAME, 8))
+		touch_step += 2;
 
 	ret = ft5x0x_i2c_rxdata(ft->client, buf, 62);
 	if (ret < 0) {
@@ -270,23 +276,23 @@ static int ft5x0x_report_touch(struct ft5x0x_ts_data *ft)
 	}
 
 	for (i = 0; i < CFG_MAX_TOUCH_POINTS; i++) {
-		pointid = (buf[FT_TOUCH_ID_POS + FT_TOUCH_STEP * i]) >> 4;
+		pointid = (buf[FT_TOUCH_ID_POS + touch_step * i]) >> 4;
 		if (pointid >= 0x0F)
 			break;
 		else
 			event->touch_point++;
 
 		event->au16_x[i] =
-		    (s16) (buf[FT_TOUCH_X_H_POS + FT_TOUCH_STEP * i] & 0x0F) <<
-		    8 | (s16) buf[FT_TOUCH_X_L_POS + FT_TOUCH_STEP * i];
+		    (s16) (buf[FT_TOUCH_X_H_POS + touch_step * i] & 0x0F) <<
+		    8 | (s16) buf[FT_TOUCH_X_L_POS + touch_step * i];
 		event->au16_y[i] =
-		    (s16) (buf[FT_TOUCH_Y_H_POS + FT_TOUCH_STEP * i] & 0x0F) <<
-		    8 | (s16) buf[FT_TOUCH_Y_L_POS + FT_TOUCH_STEP * i];
+		    (s16) (buf[FT_TOUCH_Y_H_POS + touch_step * i] & 0x0F) <<
+		    8 | (s16) buf[FT_TOUCH_Y_L_POS + touch_step * i];
 
 		event->au8_touch_event[i] =
-		    buf[FT_TOUCH_EVENT_POS + FT_TOUCH_STEP * i] >> 6;
+		    buf[FT_TOUCH_EVENT_POS + touch_step * i] >> 6;
 		event->au8_finger_id[i] =
-		    (buf[FT_TOUCH_ID_POS + FT_TOUCH_STEP * i]) >> 4;
+		    (buf[FT_TOUCH_ID_POS + touch_step * i]) >> 4;
 
 	}
 
