@@ -202,6 +202,7 @@
 #define FULL_CAP_THLD			98	/* 98% capacity */
 #define BATT_DET_CAP_THLD		95	/* 95% capacity */
 #define DC_FG_INTR_NUM			6
+#define FULL_CAP_VAL			0x64	/* 100% capacity */
 
 #define THERM_CURVE_MAX_SAMPLES		18
 #define THERM_CURVE_MAX_VALUES		4
@@ -775,6 +776,8 @@ static int pmic_fg_get_battery_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		ret = pmic_fg_get_capacity(info);
+		if (info->status == POWER_SUPPLY_STATUS_FULL)
+			ret = FULL_CAP_VAL;
 		if (ret < 0)
 			goto pmic_fg_read_err;
 
