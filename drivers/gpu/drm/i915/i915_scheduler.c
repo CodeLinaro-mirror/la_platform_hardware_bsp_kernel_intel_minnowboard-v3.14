@@ -244,8 +244,6 @@ int i915_scheduler_queue_execbuffer(struct i915_scheduler_queue_entry *qe)
 
 		/* And anything else owned by the QE structure: */
 		kfree(qe->params.cliprects);
-		if (qe->params.dispatch_flags & I915_DISPATCH_SECURE)
-			i915_gem_execbuff_release_batch_obj(qe->params.batch_obj);
 
 #ifdef CONFIG_SYNC
 		if (qe->params.fence_wait)
@@ -748,11 +746,6 @@ static int i915_scheduler_remove(struct intel_engine_cs *ring)
 		if (node->params.fence_wait)
 			sync_fence_put(node->params.fence_wait);
 #endif
-
-		/* The batch buffer must be unpinned before it is unreferenced
-		 * otherwise the unpin fails with a missing vma!? */
-		if (node->params.dispatch_flags & I915_DISPATCH_SECURE)
-			i915_gem_execbuff_release_batch_obj(node->params.batch_obj);
 
 		/* Release the locked buffers: */
 		for (i = 0; i < node->num_objs; i++) {

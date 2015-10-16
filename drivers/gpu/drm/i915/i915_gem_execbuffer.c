@@ -1730,6 +1730,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 	if (ret)
 		goto err;
 
+	if (batch_pinned)
+		i915_gem_execbuff_release_batch_obj(batch_obj);
+
 	/* the request owns the ref now */
 	i915_gem_context_unreference(ctx);
 
@@ -1791,6 +1794,17 @@ pre_mutex_err:
 
 void i915_gem_execbuff_release_batch_obj(struct drm_i915_gem_object *batch_obj)
 {
+	/* Move the GGTT vma also to the corresponding active list, though the
+	 * object is already marked as active & the PPGTT vma is also linked
+	 * in the active list. But it is still better to do that, so as to
+	 * avoid the GGTT vma being considered too early for eviction/unbind,
+	 * in case of a contention or low memory scenario.
+	 */
+	if (!WARN_ON(!batch_obj->active)) {
+		struct i915_vma *vma = i915_gem_obj_to_ggtt(batch_obj);
+		list_move_tail(&vma->mm_list, &vma->vm->active_list);
+	}
+
 	/*
 	 * FIXME: We crucially rely upon the active tracking for the (ppgtt)
 	 * batch vma for correctness. For less ugly and less fragility this
