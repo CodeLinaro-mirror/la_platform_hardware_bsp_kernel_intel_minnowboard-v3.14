@@ -10906,14 +10906,17 @@ int intel_set_disp_calc_flip(struct drm_mode_set_display *disp,
 				(((disp->panel_fitter.src_w - 1) << 16) |
 						(disp->panel_fitter.src_h - 1));
 
-			if (((mode->hdisplay * disp->panel_fitter.src_h) /
-						disp->panel_fitter.src_w) < mode->vdisplay)
+			if ((((mode->hdisplay * disp->panel_fitter.src_h) /
+						disp->panel_fitter.src_w) < mode->vdisplay) &&
+						dev_priv->maxfifo_enabled)
 				pfit_mode |= PFIT_SCALING_LETTER;
-			else if (((mode->vdisplay * disp->panel_fitter.src_w) /
-						disp->panel_fitter.src_h) < mode->hdisplay)
+			else if ((((mode->vdisplay * disp->panel_fitter.src_w) /
+						disp->panel_fitter.src_h) < mode->hdisplay) &&
+						dev_priv->maxfifo_enabled)
 				pfit_mode |= PFIT_SCALING_PILLAR;
-			else if ((mode->hdisplay / mode->vdisplay) ==
+			else if (((mode->hdisplay / mode->vdisplay) ==
 					(disp->panel_fitter.src_w / disp->panel_fitter.src_h))
+					|| !dev_priv->maxfifo_enabled)
 				pfit_mode |= PFIT_SCALING_AUTO;
 
 			/* Enable Panel fitter if any valid mode is set */
