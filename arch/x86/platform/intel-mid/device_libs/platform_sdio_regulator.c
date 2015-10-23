@@ -235,7 +235,7 @@ static void intel_setup_dollar_cove_sd_regulators(void)
 
 	/* set enable time for vqmmc regulator, stabilize power rail */
 	dcovex_vqmmc_data.constraints.enable_time = 10000;
-	if (dmi_match(DMI_BOARD_NAME, "I8880")) {
+	if (dmi_match(DMI_BOARD_NAME, "VTA0803")) {
 		dcovex_vmmc_data.constraints.name = "LDO_1";
 		dcovex_vqmmc_data.constraints.name = "LDO_2";
 
