@@ -1,5 +1,5 @@
 #EXTRA CFLAGS
-ccflags-y += -Werror
+#ccflags-y += -Werror
 
 #EXTRA_CFLAGS += -DDEBUG
 

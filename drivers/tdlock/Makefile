@@ -2,7 +2,7 @@
 # Makefile for the td lock driver.
 #
 
-ccflags-y := -Werror -Idrivers/misc/mei
+ccflags-y := -Idrivers/misc/mei
 
 ifeq ($(CONFIG_TCG_TPM), m)
 		ccflags-y += -DTCG_TPM_MODULE
